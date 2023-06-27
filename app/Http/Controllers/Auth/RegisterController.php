@@ -7,6 +7,7 @@ use App\Providers\RouteServiceProvider;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
@@ -64,10 +65,20 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+        $details = [
+            'name' => $user->name,
+            'appUrl' => config('app.url')
+        ];
+        Mail::send('users.email.register_confirmation', $details, function ($message) use ($user) {
+            $message->from(config('mail.from.address'), config('app.name'))
+            ->to($user->email, $user->name)
+            ->subject('Thankyou for registering in Kredo IG app!');
+        });
+        return $user;
     }
 }
